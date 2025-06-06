@@ -187,11 +187,11 @@ def get_database_session(database_url: str):
     """Create database engine and return session"""
     # Add MySQL-specific connection options
     if database_url.startswith("mysql"):
-        # Add charset for proper UTF-8 support
+        # Add charset for proper UTF-8 support (use 'utf8' not 'utf8mb4' for pymysql compatibility)
         if "?" not in database_url:
-            database_url += "?charset=utf8mb4"
-        else:
-            database_url += "&charset=utf8mb4"
+            database_url += "?charset=utf8"
+        elif "charset=" not in database_url:
+            database_url += "&charset=utf8"
     
     engine = create_engine(
         database_url,

@@ -46,7 +46,7 @@ class DatabaseConfig(BaseModel):
         if (self.mysql_user and self.mysql_database and 
             self.mysql_user.strip() and self.mysql_database.strip() and
             self.mysql_user != "your_mysql_user"):
-            return f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8mb4"
+            return f"mysql+pymysql://{self.mysql_user}:{self.mysql_password}@{self.mysql_host}:{self.mysql_port}/{self.mysql_database}?charset=utf8"
         else:
             # Fallback to SQLite for local development
             return "sqlite:///data/products.db"
