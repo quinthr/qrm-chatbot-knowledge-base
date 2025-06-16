@@ -7,7 +7,7 @@ import openai
 
 from .models import (
     Product, ProductVariation, Category, ShippingZone, 
-    ShippingMethod, ShippingClass, CrawlLog, Site, get_database_session
+    ShippingMethod, ShippingClass, ShippingClassRate, CrawlLog, Site, get_database_session
 )
 from .config import config
 
@@ -304,7 +304,7 @@ class DataStorage:
                 self.db_session.rollback()
                 
     def _save_shipping_method(self, zone_id: int, method_data: Dict):
-        """Save individual shipping method"""
+        """Save individual shipping method and its class rates"""
         try:
             existing = self.db_session.query(ShippingMethod).filter_by(
                 zone_id=zone_id,
@@ -330,8 +330,59 @@ class DataStorage:
                 
             self.db_session.commit()
             
+            # Extract and save shipping class rates from settings
+            self._save_shipping_class_rates(method.id, method_data.get('settings', {}))
+            
         except Exception as e:
             print(f"Error saving shipping method: {e}")
+            self.db_session.rollback()
+    
+    def _save_shipping_class_rates(self, method_id: int, settings: Dict):
+        """Extract and save shipping class rates from method settings"""
+        try:
+            # Clear existing rates for this method
+            self.db_session.query(ShippingClassRate).filter_by(method_id=method_id).delete()
+            
+            # Extract rates from settings
+            # WooCommerce stores class rates with keys like 'class_cost_X' where X is class ID
+            for key, value in settings.items():
+                if key.startswith('class_cost_'):
+                    # Extract shipping class ID from key (e.g., 'class_cost_5' -> 5)
+                    try:
+                        class_woo_id = int(key.replace('class_cost_', ''))
+                    except ValueError:
+                        continue
+                        
+                    # Find the shipping class in our database
+                    shipping_class = self.db_session.query(ShippingClass).filter_by(
+                        site_id=self.site_id,
+                        woo_id=class_woo_id
+                    ).first()
+                    
+                    # Create rate entry
+                    rate = ShippingClassRate()
+                    rate.site_id = self.site_id
+                    rate.method_id = method_id
+                    rate.shipping_class_id = shipping_class.id if shipping_class else None
+                    rate.cost = str(value) if value else '0'
+                    rate.calculation_type = settings.get(f'class_calc_{class_woo_id}', 'flat')
+                    
+                    self.db_session.add(rate)
+            
+            # Handle "no shipping class" rate
+            if 'no_class_cost' in settings:
+                rate = ShippingClassRate()
+                rate.site_id = self.site_id
+                rate.method_id = method_id
+                rate.shipping_class_id = None  # No shipping class
+                rate.cost = str(settings['no_class_cost'])
+                rate.calculation_type = settings.get('no_class_calc', 'flat')
+                self.db_session.add(rate)
+            
+            self.db_session.commit()
+            
+        except Exception as e:
+            print(f"Error saving shipping class rates: {e}")
             self.db_session.rollback()
             
     def save_page_content(self, url: str, content: str, page_type: str = "page"):

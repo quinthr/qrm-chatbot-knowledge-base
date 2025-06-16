@@ -149,6 +149,7 @@ class ShippingMethod(Base):
     # Relationships
     site = relationship('Site')
     zone = relationship('ShippingZone', back_populates='methods')
+    class_rates = relationship('ShippingClassRate', back_populates='method', cascade='all, delete-orphan')
 
 
 class ShippingClass(Base):
@@ -163,9 +164,26 @@ class ShippingClass(Base):
     
     # Relationships
     site = relationship('Site', back_populates='shipping_classes')
+    rates = relationship('ShippingClassRate', back_populates='shipping_class', cascade='all, delete-orphan')
     
     # Add unique constraint for site_id + woo_id
     __table_args__ = (UniqueConstraint('site_id', 'woo_id', name='_site_class_woo_id_uc'),)
+
+
+class ShippingClassRate(Base):
+    __tablename__ = 'shipping_class_rates'
+    
+    id = Column(Integer, primary_key=True)
+    site_id = Column(Integer, ForeignKey('sites.id'), nullable=False)
+    method_id = Column(Integer, ForeignKey('shipping_methods.id'), nullable=False)
+    shipping_class_id = Column(Integer, ForeignKey('shipping_classes.id'), nullable=True)  # NULL = no shipping class
+    cost = Column(String(50))
+    calculation_type = Column(String(20))  # 'flat', 'percent', etc.
+    
+    # Relationships
+    site = relationship('Site')
+    method = relationship('ShippingMethod', back_populates='class_rates')
+    shipping_class = relationship('ShippingClass', back_populates='rates')
 
 
 class CrawlLog(Base):

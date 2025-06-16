@@ -146,6 +146,22 @@ CREATE TABLE IF NOT EXISTS shipping_classes (
     CONSTRAINT fk_classes_site FOREIGN KEY (site_id) REFERENCES sites(id)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- Create shipping_class_rates table
+CREATE TABLE IF NOT EXISTS shipping_class_rates (
+    id INTEGER NOT NULL AUTO_INCREMENT,
+    site_id INTEGER NOT NULL,
+    method_id INTEGER NOT NULL,
+    shipping_class_id INTEGER,
+    cost VARCHAR(50),
+    calculation_type VARCHAR(20),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_rates_site FOREIGN KEY (site_id) REFERENCES sites(id),
+    CONSTRAINT fk_rates_method FOREIGN KEY (method_id) REFERENCES shipping_methods(id) ON DELETE CASCADE,
+    CONSTRAINT fk_rates_class FOREIGN KEY (shipping_class_id) REFERENCES shipping_classes(id) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- Create crawl_logs table
 CREATE TABLE IF NOT EXISTS crawl_logs (
     id INTEGER NOT NULL AUTO_INCREMENT,
