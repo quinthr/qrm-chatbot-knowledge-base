@@ -123,6 +123,7 @@ class ShippingZone(Base):
     woo_id = Column(Integer, nullable=False)
     name = Column(String(255), nullable=False)
     order = Column(Integer)
+    locations = Column(Text)  # JSON string containing countries, states, postcodes
     
     # Relationships
     site = relationship('Site', back_populates='shipping_zones')

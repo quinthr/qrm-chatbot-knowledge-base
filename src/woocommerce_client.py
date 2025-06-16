@@ -101,19 +101,26 @@ class WooCommerceClient:
     
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
     def get_shipping_zones(self) -> List[Dict]:
-        """Fetch all shipping zones and their methods"""
+        """Fetch all shipping zones with their methods and locations"""
         zones = []
         
         response = self.api.get("shipping/zones")
         if response.status_code == 200:
             zones = response.json()
             
-            # Get methods for each zone
+            # Get methods and locations for each zone
             for zone in zones:
                 zone_id = zone.get('id')
+                
+                # Get methods for this zone
                 methods_response = self.api.get(f"shipping/zones/{zone_id}/methods")
                 if methods_response.status_code == 200:
                     zone['methods'] = methods_response.json()
+                
+                # Get locations for this zone
+                locations_response = self.api.get(f"shipping/zones/{zone_id}/locations")
+                if locations_response.status_code == 200:
+                    zone['locations'] = locations_response.json()
                     
         return zones
     

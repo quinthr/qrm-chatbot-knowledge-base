@@ -250,6 +250,7 @@ class DataStorage:
                 zone.woo_id = zone_data['id']
                 zone.name = zone_data.get('name', '')
                 zone.order = zone_data.get('order', 0)
+                zone.locations = json.dumps(zone_data.get('locations', []))
                 
                 if not existing:
                     self.db_session.add(zone)
