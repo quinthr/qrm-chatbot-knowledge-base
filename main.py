@@ -103,7 +103,7 @@ def main():
             if product.get('type') == 'variable':
                 # Get the product from database to get its ID
                 db_product = storage.db_session.query(models.Product).filter_by(
-                    site_id=site.id,
+                    site_id=site_id,
                     woo_id=product['id']
                 ).first()
                 
@@ -139,7 +139,9 @@ def main():
         print("\n✅ Crawl completed successfully!")
         print(f"Site: {site_config.name}")
         print(f"Total products: {saved_products}")
+        print(f"Total product variations: {variation_count}")
         print(f"Total categories: {saved_categories}")
+        print(f"Total shipping zones: {len(shipping_zones)}")
         
     except Exception as e:
         print(f"\n❌ Error during crawl: {e}")
