@@ -250,7 +250,17 @@ class DataStorage:
                 zone.woo_id = zone_data['id']
                 zone.name = zone_data.get('name', '')
                 zone.order = zone_data.get('order', 0)
-                zone.locations = json.dumps(zone_data.get('locations', []))
+                
+                # Clean location data - remove API metadata and keep only essential fields
+                locations = zone_data.get('locations', [])
+                cleaned_locations = []
+                for location in locations:
+                    cleaned_location = {
+                        'code': location.get('code', ''),
+                        'type': location.get('type', '')
+                    }
+                    cleaned_locations.append(cleaned_location)
+                zone.locations = json.dumps(cleaned_locations)
                 
                 if not existing:
                     self.db_session.add(zone)
