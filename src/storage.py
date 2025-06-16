@@ -343,15 +343,26 @@ class DataStorage:
             # Clear existing rates for this method
             self.db_session.query(ShippingClassRate).filter_by(method_id=method_id).delete()
             
-            # Extract rates from settings
-            # WooCommerce stores class rates with keys like 'class_cost_X' where X is class ID
-            for key, value in settings.items():
+            # Debug: Print settings to understand the structure
+            print(f"Method settings for method {method_id}: {json.dumps(settings, indent=2)}")
+            
+            # Extract rates from settings - WooCommerce format varies by shipping method type
+            for key, setting_data in settings.items():
                 if key.startswith('class_cost_'):
-                    # Extract shipping class ID from key (e.g., 'class_cost_5' -> 5)
+                    # Extract shipping class ID from key (e.g., 'class_cost_7' -> 7)
                     try:
                         class_woo_id = int(key.replace('class_cost_', ''))
                     except ValueError:
                         continue
+                    
+                    # Get the actual cost value - it might be in 'value' field or direct
+                    cost_value = '0'
+                    if isinstance(setting_data, dict):
+                        cost_value = setting_data.get('value', '0')
+                    elif isinstance(setting_data, str):
+                        cost_value = setting_data
+                    else:
+                        cost_value = str(setting_data) if setting_data else '0'
                         
                     # Find the shipping class in our database
                     shipping_class = self.db_session.query(ShippingClass).filter_by(
@@ -364,20 +375,42 @@ class DataStorage:
                     rate.site_id = self.site_id
                     rate.method_id = method_id
                     rate.shipping_class_id = shipping_class.id if shipping_class else None
-                    rate.cost = str(value) if value else '0'
-                    rate.calculation_type = settings.get(f'class_calc_{class_woo_id}', 'flat')
+                    rate.cost = cost_value
+                    
+                    # Get calculation type if available
+                    calc_key = f'class_calc_{class_woo_id}'
+                    calc_data = settings.get(calc_key, {})
+                    if isinstance(calc_data, dict):
+                        rate.calculation_type = calc_data.get('value', 'flat')
+                    else:
+                        rate.calculation_type = str(calc_data) if calc_data else 'flat'
                     
                     self.db_session.add(rate)
+                    print(f"Added rate for class {class_woo_id}: {cost_value}")
             
             # Handle "no shipping class" rate
             if 'no_class_cost' in settings:
+                no_class_data = settings['no_class_cost']
+                cost_value = '0'
+                if isinstance(no_class_data, dict):
+                    cost_value = no_class_data.get('value', '0')
+                else:
+                    cost_value = str(no_class_data) if no_class_data else '0'
+                
                 rate = ShippingClassRate()
                 rate.site_id = self.site_id
                 rate.method_id = method_id
                 rate.shipping_class_id = None  # No shipping class
-                rate.cost = str(settings['no_class_cost'])
-                rate.calculation_type = settings.get('no_class_calc', 'flat')
+                rate.cost = cost_value
+                
+                no_calc_data = settings.get('no_class_calc', {})
+                if isinstance(no_calc_data, dict):
+                    rate.calculation_type = no_calc_data.get('value', 'flat')
+                else:
+                    rate.calculation_type = str(no_calc_data) if no_calc_data else 'flat'
+                
                 self.db_session.add(rate)
+                print(f"Added no-class rate: {cost_value}")
             
             self.db_session.commit()
             
