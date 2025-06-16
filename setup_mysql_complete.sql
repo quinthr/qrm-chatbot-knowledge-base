@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS shipping_classes (
     id INTEGER NOT NULL AUTO_INCREMENT,
     site_id INTEGER NOT NULL,
     woo_id INTEGER NOT NULL,
-    name VARCHAR(255) NOT NULL,
+    name TEXT NOT NULL,
     slug VARCHAR(255) NOT NULL,
     description TEXT,
     count INTEGER DEFAULT 0,
