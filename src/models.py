@@ -204,7 +204,7 @@ class CrawlLog(Base):
     
 def get_database_session(database_url: str):
     """Create database engine and return session"""
-    # Add MySQL-specific connection options
+    # Add database-specific connection options
     if database_url.startswith("mysql"):
         # Add charset for proper UTF-8 support (use 'utf8' not 'utf8mb4' for pymysql compatibility)
         if "?" not in database_url:
@@ -212,11 +212,20 @@ def get_database_session(database_url: str):
         elif "charset=" not in database_url:
             database_url += "&charset=utf8"
     
-    engine = create_engine(
-        database_url,
-        pool_pre_ping=True,  # Verify connections before using them
-        pool_recycle=3600,   # Recycle connections after 1 hour
-    )
+    # PostgreSQL connection settings
+    engine_kwargs = {
+        "pool_pre_ping": True,  # Verify connections before using them
+        "pool_recycle": 3600,   # Recycle connections after 1 hour
+    }
+    
+    # Add PostgreSQL-specific settings if needed
+    if database_url.startswith("postgresql"):
+        engine_kwargs.update({
+            "pool_size": 10,
+            "max_overflow": 20,
+        })
+    
+    engine = create_engine(database_url, **engine_kwargs)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     return Session()

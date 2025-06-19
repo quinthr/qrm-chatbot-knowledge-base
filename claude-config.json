@@ -1,0 +1,88 @@
+{
+  "mcpServers": {
+    "qrm-chatbot-knowledge-base": {
+      "command": "python",
+      "args": ["-m", "mcp_server"],
+      "env": {
+        "DATABASE_URL": "mysql://user:password@localhost/chatbot_knowledge_base",
+        "CHROMA_PERSIST_DIR": "./data/chroma"
+      }
+    }
+  },
+  "database_schema": {
+    "tables": {
+      "sites": {
+        "description": "Multi-site configuration for different WooCommerce stores",
+        "key_fields": ["name", "url", "consumer_key", "consumer_secret"]
+      },
+      "products": {
+        "description": "WooCommerce products with pricing and inventory data",
+        "key_fields": ["site_id", "woo_id", "name", "sku", "price", "stock_status"],
+        "relationships": ["product_variations", "categories"]
+      },
+      "product_variations": {
+        "description": "Product variations with individual pricing and attributes",
+        "key_fields": ["product_id", "woo_id", "sku", "price", "attributes"],
+        "note": "Contains variation-specific pricing for variable products"
+      },
+      "shipping_zones": {
+        "description": "Shipping zones with location restrictions",
+        "key_fields": ["site_id", "woo_id", "name", "locations"],
+        "note": "locations field contains JSON array of countries/states/postcodes"
+      },
+      "shipping_methods": {
+        "description": "Shipping methods available in each zone",
+        "key_fields": ["zone_id", "title", "method_id", "enabled", "settings"]
+      },
+      "shipping_classes": {
+        "description": "Product shipping classes for different shipping rates",
+        "key_fields": ["site_id", "woo_id", "name", "slug"],
+        "note": "name field is TEXT to support long class names"
+      },
+      "shipping_class_rates": {
+        "description": "Method-specific costs per shipping class",
+        "key_fields": ["method_id", "shipping_class_id", "cost", "calculation_type"],
+        "note": "Links shipping methods to class-specific pricing"
+      },
+      "categories": {
+        "description": "Product categories from WooCommerce",
+        "key_fields": ["site_id", "woo_id", "name", "parent_id"]
+      }
+    }
+  },
+  "api_capabilities": {
+    "product_queries": [
+      "Find products by name, SKU, or category",
+      "Get product variations with individual pricing", 
+      "Check stock status and quantities",
+      "Search by shipping class"
+    ],
+    "shipping_queries": [
+      "Calculate shipping costs by product class and method",
+      "Find shipping zones by location (postcode/region)",
+      "Get available shipping methods for zones",
+      "Compare shipping rates across methods"
+    ],
+    "pricing_queries": [
+      "Get regular and sale prices for products",
+      "Find variation pricing for configurable products",
+      "Calculate shipping costs based on product classes",
+      "Compare prices across product variations"
+    ]
+  },
+  "recent_updates": {
+    "2025-01-17": {
+      "features_added": [
+        "Shipping zone location restrictions",
+        "Product variation pricing support", 
+        "Shipping class rate calculations",
+        "Enhanced data field sizes"
+      ],
+      "database_migrations_required": [
+        "ALTER TABLE shipping_zones ADD COLUMN locations TEXT;",
+        "ALTER TABLE shipping_classes MODIFY COLUMN name TEXT NOT NULL;",
+        "CREATE TABLE shipping_class_rates (see setup_mysql_complete.sql);"
+      ]
+    }
+  }
+}

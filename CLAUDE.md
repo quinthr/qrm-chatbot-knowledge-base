@@ -68,3 +68,36 @@ This is a WooCommerce data crawler that extracts product information and stores 
 - Each crawl session is logged with statistics in the database
 - The system is designed to run as scheduled cron jobs for regular updates
 - All multi-site data is isolated by site_id in the database
+
+## Recent Updates (2025-01-17)
+
+### Database Schema Changes
+- **shipping_zones.locations**: Added TEXT column storing JSON array of location restrictions (countries, states, postcodes)
+- **shipping_classes.name**: Changed from VARCHAR(255) to TEXT to prevent name truncation
+- **shipping_class_rates**: New table linking shipping methods to class-specific pricing
+- **product_variations**: Fixed crawling logic to properly store variation prices and attributes
+
+### New Features
+1. **Shipping Zone Locations**: Captures postcodes/regions for accurate shipping zone targeting
+2. **Product Variations**: Properly stores and indexes all product variation data including prices
+3. **Shipping Class Rates**: Links shipping methods to shipping class costs for accurate pricing
+4. **Enhanced Data Quality**: Improved field sizes and data extraction accuracy
+
+### Database Queries for New Features
+```sql
+-- Get shipping zones with their location restrictions
+SELECT sz.name, sz.locations FROM shipping_zones sz WHERE sz.site_id = ?;
+
+-- Get product variations with pricing
+SELECT p.name, pv.sku, pv.price, pv.attributes 
+FROM products p 
+JOIN product_variations pv ON p.id = pv.product_id 
+WHERE p.site_id = ?;
+
+-- Get shipping costs by class and method
+SELECT sm.title as method, sc.name as class, scr.cost, scr.calculation_type
+FROM shipping_class_rates scr
+JOIN shipping_methods sm ON scr.method_id = sm.id
+JOIN shipping_classes sc ON scr.shipping_class_id = sc.id
+WHERE scr.site_id = ?;
+```

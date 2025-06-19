@@ -1,0 +1,40 @@
+# Environment files
+.env
+.env.*
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Data files
+data/
+*.db
+*.sqlite3
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Zone Identifier files (Windows)
+*:Zone.Identifier
+
+# ChromaDB
+chroma/
+*.chroma

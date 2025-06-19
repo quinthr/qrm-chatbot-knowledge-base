@@ -28,7 +28,10 @@ class CrawlerConfig(BaseModel):
 
 
 class DatabaseConfig(BaseModel):
-    # MySQL connection parameters
+    # Database URL (supports PostgreSQL, MySQL, SQLite)
+    database_url: str = os.getenv("DATABASE_URL", "")
+    
+    # Legacy MySQL parameters (for backwards compatibility)
     mysql_host: str = os.getenv("MYSQL_HOST", "")
     mysql_port: int = int(os.getenv("MYSQL_PORT", "3306"))
     mysql_user: str = os.getenv("MYSQL_USER", "")
@@ -37,7 +40,12 @@ class DatabaseConfig(BaseModel):
     
     @property
     def url(self) -> str:
-        """Return database URL - MySQL if configured, otherwise SQLite"""
+        """Return database URL - DATABASE_URL if set, otherwise legacy MySQL, otherwise SQLite"""
+        # First priority: DATABASE_URL environment variable
+        if self.database_url and self.database_url.strip():
+            return self.database_url
+        
+        # Second priority: MySQL configuration (backwards compatibility)
         if (self.mysql_user and self.mysql_database and 
             self.mysql_user.strip() and self.mysql_database.strip() and
             self.mysql_user != "your_mysql_user"):
@@ -47,15 +55,19 @@ class DatabaseConfig(BaseModel):
             return "sqlite:///data/products.db"
     
     @property
+    def is_postgresql(self) -> bool:
+        """Check if using PostgreSQL"""
+        return "postgresql" in self.url.lower()
+    
+    @property
     def is_mysql(self) -> bool:
         """Check if using MySQL"""
-        return bool(
-            self.mysql_user and 
-            self.mysql_database and 
-            self.mysql_user.strip() and 
-            self.mysql_database.strip() and
-            self.mysql_user != "your_mysql_user"
-        )
+        return "mysql" in self.url.lower()
+    
+    @property
+    def is_sqlite(self) -> bool:
+        """Check if using SQLite"""
+        return "sqlite" in self.url.lower()
     
     chroma_persist_directory: str = os.getenv("CHROMA_PERSIST_DIRECTORY", "./data/chroma")
 

@@ -15,7 +15,8 @@ from .config import config
 class DataStorage:
     def __init__(self, site_id: int = None):
         # SQL database session
-        print(f"Using database: {'MySQL' if config.database.is_mysql else 'SQLite'}")
+        db_type = "PostgreSQL" if config.database.is_postgresql else ("MySQL" if config.database.is_mysql else "SQLite")
+        print(f"Using database: {db_type}")
         print(f"Database URL: {config.database.url}")
         self.db_session = get_database_session(config.database.url)
         self.site_id = site_id
